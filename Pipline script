@@ -1,0 +1,22 @@
+node('centos7') {
+    stage('Checkout Code') {
+    cleanWs()
+    checkout([$class: 'GitSCM', branches: [[name: 'master']], extensions: [], userRemoteConfigs: [[credentialsId: 'github', url: 'git@github.com:lidorg-dev/node-hello.git']]])
+    }
+    stage('Build') {
+    sh 'npm install'
+    }
+    parallel('Test': {
+    sh 'nohup node index.js &'
+    sh 'curl localhost:3000'
+    },
+    'Parallel avi testing': {
+    sh 'sleep 20'    
+    }) 
+    stage('Package') {
+    sh "tar -czvf app-${BUILD_ID}.tar.gz *"
+    archiveArtifacts artifacts: '*.tar.gz', followSymlinks: false
+    chuckNorris()
+    }
+
+}
